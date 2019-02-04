@@ -24,7 +24,13 @@ def _hide(text:bytes, picture_data):
     yields : int"""
     if not isinstance(picture_data[0], int) : # we need a flat iterable of int
         picture_data = itertools.chain.from_iterable(picture_data)
-    return tuple(p|(t&254) for p,t in zip(_titer(text), picture_data))
+    else :
+        picture_data = iter(picture_data)
+    ret = [p|(t&254) for p,t in zip(_titer(text), picture_data)]
+    # we now have to assert picture_data ends on a pixel
+    while len(ret)%3 : # WARNING: magic number here : 3 (R, V, B)
+        ret.append(next(picture_data))
+    return ret
 
 def _show(picture_data):
     """Generator yielding the text hidden in the picture_data.
@@ -38,26 +44,22 @@ def _show(picture_data):
             yield z
             z = 0
 
-def _bundle(data, bands=3) :
+def _bundle(data, bands:int=3) :
     """Bundles <data> (iterable) by groups of <band> elements,
     for use by PIL.Image.Image.putdata. (undoes itertools.chain)
-    Does nothing (returns data) if <band> <= 1"""
+    Does nothing (returns <data>) if <band> <= 1"""
     if bands <= 1 : # nothing to do
         return tuple(data)
-    RET = list()
     def f(x,y):
+        x = x + (y,)
         if len(x) >= bands :
-            RET.append(x)
-            return (y,)
+            return tuple()
         else :
-            return x + (y,)
+            return x
 
-    l = tuple(itertools.accumulate(itertools.chain( ((),), data, ((),) ), f))
-    # ((),) are there to help start and stop f
-    # we only need to iterate through : we only need the side effect
-    # (i.e. RET filling)
-    return RET
-
+    return tuple(x for x in
+        itertools.accumulate(itertools.chain( ((),), data), f)
+            if len(x)==bands)
 
 def hide(text:bytes, image:PIL.Image.Image)->None :
     """Hides the text in the image. Returns nothing, but modifies the image"""

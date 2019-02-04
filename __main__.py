@@ -60,7 +60,7 @@ if args.decipher :
 
 # input / de-steganographying
 if args.show :
-    print("showing...", end="")
+    print("showing...", end="", flush=True)
     current_data = stegano.show(Image.open(args.source).convert("RGB"))
 elif args.source is None :
     print("Type your input (double return when done) : ")
@@ -77,17 +77,17 @@ else :
 
 # deciphering
 if args.decipher :
-    print("deciphering...", end="")
+    print("deciphering...", end="", flush=True)
     current_data = cipher.decipher(current_data, pwdd)
 
 # ciphering
 if args.cipher :
-    print("ciphering...", end="")
+    print("ciphering...", end="", flush=True)
     current_data = cipher.cipher(current_data, pwdc)
 
 # output / steganographying
 if args.hide :
-    print("hiding...", end="")
+    print("hiding...", end="", flush=True)
     support = Image.open(args.hide).convert("RGBA")
     alpha = support.split()[-1]
     support = support.convert("RGB")
