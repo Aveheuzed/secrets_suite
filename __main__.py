@@ -17,17 +17,6 @@ def _checkpath(path:str)->pathlib.Path:
     else :
         raise argparse.ArgumentTypeError("This path does not exist")
 
-def _genonfh(fh:open):
-    """generator yielding the content of the file handler (readable) one character at a time,
-    to be able to iterate on the file handler as if it were on its content (saves time and memory)
-    yields : int"""
-    data = True
-    while data : # when exhausted, the read() method return an empty str|bytes
-        data = fh.read(1)
-        if data :
-            yield ord(data)
-
-
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, epilog="""
 The specified actions are taken in the following order :
 1) show
@@ -88,13 +77,14 @@ if args.cipher :
 # output / steganographying
 if args.hide :
     print("hiding...", end="", flush=True)
-    support = Image.open(args.hide).convert("RGBA")
-    alpha = support.split()[-1]
+    support = Image.open(args.hide)
+    if support.mode == "RGBA" :
+        alpha = support.split()[-1]
     support = support.convert("RGB")
 
     stegano.hide(current_data, support)
 
-    if alpha.getextrema() != (255,255) :
+    if "alpha" in locals().keys() :
         support.putalpha(alpha)
     support.save(args.output)
     print("done.")
